@@ -44,10 +44,10 @@ class ExprInterpreterTest extends FunSuite {
   }
 
   test("complex") {
-    val e = parser.parseAll(parser.expr, "one + 2 + 3 * 2**3").get
+    val e = parser.parseAll(parser.expr, "(one + 2 + 3 * 2**3) / 9 + 1").get
 
     val r = interpreter.exec(e)
 
-    assert(r == DoubleValue(27))
+    assert(r == DoubleValue(4))
   }
 }
