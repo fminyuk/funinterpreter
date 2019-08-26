@@ -13,6 +13,7 @@ trait ExprParser extends RegexParsers with PackratParsers {
   lazy val expr: Parser[Expr] = operators(List(
     ("!", unary),
     ("+ -", unary),
+    ("**", binary),
     ("* /", binary),
     ("+ -", binary),
     ("== != >= <= > <", binary),
