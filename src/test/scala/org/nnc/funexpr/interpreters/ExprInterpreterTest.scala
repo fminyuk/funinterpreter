@@ -1,7 +1,7 @@
 package org.nnc.funexpr.interpreters
 
 import org.nnc.funexpr.ast.ExprValue
-import org.nnc.funexpr.interpreters.values.DoubleValue
+import org.nnc.funexpr.interpreters.values.{DoubleValue, Value}
 import org.nnc.funexpr.parsers.ExprParser
 import org.scalatest.FunSuite
 
@@ -16,6 +16,7 @@ class ExprInterpreterTest extends FunSuite {
     s.add("zero", 0.0)
     s.add("one", 1.0)
     s.add("ten", 10.0)
+
     s.add("+", (a: Double) => +a)
     s.add("-", (a: Double) => -a)
     s.add("**", (a: Double, b: Double) => math.pow(a, b))
@@ -23,6 +24,15 @@ class ExprInterpreterTest extends FunSuite {
     s.add("/", (a: Double, b: Double) => a / b)
     s.add("+", (a: Double, b: Double) => a + b)
     s.add("-", (a: Double, b: Double) => a - b)
+    s.add("==", (a: Double, b: Double) => a == b)
+    s.add("!=", (a: Double, b: Double) => a != b)
+    s.add(">=", (a: Double, b: Double) => a >= b)
+    s.add("<=", (a: Double, b: Double) => a <= b)
+    s.add(">", (a: Double, b: Double) => a > b)
+    s.add("<", (a: Double, b: Double) => a < b)
+    s.add("!", (a: Boolean) => !a)
+    s.add("&&", (a: Boolean, b: Boolean) => a && b)
+    s.add("||", (a: Boolean, b: Boolean) => a || b)
 
     new ExprInterpreter(s)
   }
