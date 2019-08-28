@@ -1,6 +1,4 @@
-package org.nnc.funexpr.interpreters.values
-
-import org.nnc.funexpr.interpreters.types._
+package org.nnc.funexpr.interpreters
 
 object ValuesImplicits {
 
@@ -27,11 +25,10 @@ object ValuesImplicits {
     new ValuesConverter[T1 => R] {
       override val valueType: Type = FunctionType(r.valueType, Seq(t1.valueType))
 
-      override def encode(value: T1 => R): Value = {
-        FunctionValue {
-          case Seq(a1) => r.encode(value(t1.decode(a1)))
-        }
-      }
+      override def encode(value: T1 => R): Value = FunctionValue(
+        valueType,
+        { case Seq(a1) => r.encode(value(t1.decode(a1))) }
+      )
 
       override def decode(value: Value): T1 => R = {
         val fun = value.asInstanceOf[FunctionValue].value
@@ -49,11 +46,10 @@ object ValuesImplicits {
     new ValuesConverter[(T1, T2) => R] {
       override val valueType: Type = FunctionType(r.valueType, Seq(t1.valueType, t2.valueType))
 
-      override def encode(value: (T1, T2) => R): Value = {
-        FunctionValue {
-          case Seq(a1, a2) => r.encode(value(t1.decode(a1), t2.decode(a2)))
-        }
-      }
+      override def encode(value: (T1, T2) => R): Value = FunctionValue(
+        valueType,
+        { case Seq(a1, a2) => r.encode(value(t1.decode(a1), t2.decode(a2))) }
+      )
 
       override def decode(value: Value): (T1, T2) => R = {
         val fun = value.asInstanceOf[FunctionValue].value
@@ -71,11 +67,10 @@ object ValuesImplicits {
     new ValuesConverter[(T1, T2, T3) => R] {
       override val valueType: Type = FunctionType(r.valueType, Seq(t1.valueType, t2.valueType, t3.valueType))
 
-      override def encode(value: (T1, T2, T3) => R): Value = {
-        FunctionValue {
-          case Seq(a1, a2, a3) => r.encode(value(t1.decode(a1), t2.decode(a2), t3.decode(a3)))
-        }
-      }
+      override def encode(value: (T1, T2, T3) => R): Value = FunctionValue(
+        valueType,
+        { case Seq(a1, a2, a3) => r.encode(value(t1.decode(a1), t2.decode(a2), t3.decode(a3))) }
+      )
 
       override def decode(value: Value): (T1, T2, T3) => R = {
         val fun = value.asInstanceOf[FunctionValue].value
@@ -94,11 +89,10 @@ object ValuesImplicits {
     new ValuesConverter[(T1, T2, T3, T4) => R] {
       override val valueType: Type = FunctionType(r.valueType, Seq(t1.valueType, t2.valueType, t3.valueType, t4.valueType))
 
-      override def encode(value: (T1, T2, T3, T4) => R): Value = {
-        FunctionValue {
-          case Seq(a1, a2, a3, a4) => r.encode(value(t1.decode(a1), t2.decode(a2), t3.decode(a3), t4.decode(a4)))
-        }
-      }
+      override def encode(value: (T1, T2, T3, T4) => R): Value = FunctionValue(
+        valueType,
+        { case Seq(a1, a2, a3, a4) => r.encode(value(t1.decode(a1), t2.decode(a2), t3.decode(a3), t4.decode(a4))) }
+      )
 
       override def decode(value: Value): (T1, T2, T3, T4) => R = {
         val fun = value.asInstanceOf[FunctionValue].value

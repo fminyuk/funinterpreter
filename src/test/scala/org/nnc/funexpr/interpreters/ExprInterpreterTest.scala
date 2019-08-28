@@ -1,7 +1,5 @@
 package org.nnc.funexpr.interpreters
 
-import org.nnc.funexpr.ast.ExprValue
-import org.nnc.funexpr.interpreters.values.{DoubleValue, Value}
 import org.nnc.funexpr.parsers.ExprParser
 import org.scalatest.FunSuite
 
@@ -9,7 +7,7 @@ class ExprInterpreterTest extends FunSuite {
   private val parser = new ExprParser {}
 
   private val interpreter: ExprInterpreter = {
-    import values.ValuesImplicits._
+    import ValuesImplicits._
 
     val s = new SymbolTableImpl()
 

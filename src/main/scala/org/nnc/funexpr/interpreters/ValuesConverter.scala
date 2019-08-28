@@ -1,6 +1,4 @@
-package org.nnc.funexpr.interpreters.values
-
-import org.nnc.funexpr.interpreters.types.Type
+package org.nnc.funexpr.interpreters
 
 trait ValuesConverter[A] {
   val valueType: Type
