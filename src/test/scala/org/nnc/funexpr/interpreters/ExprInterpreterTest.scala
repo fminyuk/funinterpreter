@@ -7,7 +7,7 @@ class ExprInterpreterTest extends FunSuite {
   private val parser = new ExprParser {}
 
   private val interpreter: ExprInterpreter = {
-    import ValuesImplicits._
+    import ValueCoderImplicits._
 
     val s = new SymbolTableImpl()
 
@@ -31,6 +31,8 @@ class ExprInterpreterTest extends FunSuite {
     s.add("!", (a: Boolean) => !a)
     s.add("&&", (a: Boolean, b: Boolean) => a && b)
     s.add("||", (a: Boolean, b: Boolean) => a || b)
+    s.add("dd", (f: (Double, Double) => Double, a: Double) => f(a, a))
+    s.add("pow", (a: Double, b: Double) => math.pow(a, b))
 
     new ExprInterpreter(s)
   }
@@ -40,7 +42,7 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == DoubleValue(0))
+    assert(r == ValueItem[Double](0))
   }
 
   test("simple") {
@@ -48,7 +50,7 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == DoubleValue(15))
+    assert(r == ValueItem[Double](15))
   }
 
   test("complex") {
@@ -56,6 +58,16 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == DoubleValue(4))
+    assert(r == ValueItem[Double](4))
   }
+
+//  test("case types") {
+//    import scala.reflect.runtime.universe._
+//
+//    var r: NewValue= NewValueR[Int](2)
+//    var t: NewValue= NewValueR[Int](3)
+//
+////    println(r.)
+//    //    println(type(ExprType))
+//  }
 }

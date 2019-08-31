@@ -12,14 +12,14 @@ class ExprInterpreter(symbolTable: SymbolTable) {
       case _ => throw new Exception("ident not found")
     }
 
-    case ExprValue(value) => DoubleValue(value)
+    case ExprValue(value) => ValueItem[Double](value)
 
     case ExprFunction(name, args) => symbolTable.getValue(name) match {
 
       case None => throw new Exception("ident not found")
 
       // TODO: add args check
-      case Some(FunctionValue(_, fun)) => fun(args.map(exec))
+      case Some(ValueFunction(fun)) => fun(args.map(exec))
 
       case _ => throw new Exception("not function")
     }

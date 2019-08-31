@@ -7,7 +7,7 @@ class SymbolTableImpl extends SymbolTable {
 
   override def getValue(ident: String): Option[Value] = values.get(ident)
 
-  def add[T: ValuesConverter](ident: String, value: T): Unit = {
-    values += ident -> implicitly[ValuesConverter[T]].encode(value)
+  def add[T: ValueCoder](ident: String, value: T): Unit = {
+    values += ident -> implicitly[ValueCoder[T]].encode(value)
   }
 }
