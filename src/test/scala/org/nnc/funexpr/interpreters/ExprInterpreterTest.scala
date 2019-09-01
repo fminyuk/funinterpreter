@@ -61,13 +61,9 @@ class ExprInterpreterTest extends FunSuite {
     assert(r == ValueItem[Double](4))
   }
 
-//  test("case types") {
-//    import scala.reflect.runtime.universe._
-//
-//    var r: NewValue= NewValueR[Int](2)
-//    var t: NewValue= NewValueR[Int](3)
-//
-////    println(r.)
-//    //    println(type(ExprType))
-//  }
+  test("case types") {
+    val a: NewValueFunction[(Double, String) => Double] = NewValueFunction(_ * _.length)
+
+    println(a.tag)
+  }
 }
