@@ -4,17 +4,17 @@ import scala.annotation.tailrec
 
 class SymbolTableCompose(symbolTables: List[SymbolTable]) extends SymbolTable {
   override def getValue(ident: String): Option[Value] = {
-    getValue(ident, symbolTables.head, symbolTables.tail)
+    getValue(ident, symbolTables)
   }
 
   @tailrec
-  private def getValue(ident: String, head: SymbolTable, tail: List[SymbolTable]): Option[Value] = {
-    head.getValue(ident) match {
-      case None => tail match {
-        case Nil => None
-        case h :: t => getValue(ident, h, t)
+  private def getValue(ident: String, st: List[SymbolTable]): Option[Value] = {
+    st match {
+      case Nil => None
+      case h :: t => h.getValue(ident) match {
+        case None => getValue(ident, t)
+        case value => value
       }
-      case value => value
     }
   }
 }
