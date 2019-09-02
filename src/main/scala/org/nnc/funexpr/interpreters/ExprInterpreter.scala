@@ -3,25 +3,33 @@ package org.nnc.funexpr.interpreters
 import org.nnc.funexpr.ast.{Expr, ExprFunction, ExprIdent, ExprValue}
 
 class ExprInterpreter(symbolTable: SymbolTable) {
-  def exec(expr: Expr): Value = expr match {
+  def exec(expr: Expr): Either[Error, Value] = expr match {
 
     case ExprIdent(name) => symbolTable.getValue(name) match {
-
-      case Some(value) => value
-
-      case _ => throw new Exception("ident not found")
+      case None => Left(ErrorIdentNotFound(name))
+      case Some(value) => Right(value)
     }
 
-    case ExprValue(value) => ValueItem[Double](value)
+    case ExprValue(value) => Right(ValueItem[Double](value))
 
     case ExprFunction(name, args) => symbolTable.getValue(name) match {
+      case None => Left(ErrorIdentNotFound(name))
 
-      case None => throw new Exception("ident not found")
-
-      // TODO: add args check
-      case Some(ValueFunction(fun)) => fun(args.map(exec))
-
-      case _ => throw new Exception("not function")
+      case Some(value) => value match {
+        case fun: ValueFunction[_] =>
+          args.foldLeft(Right(Seq()): Either[Error, Seq[Value]]) { (acc, arg) =>
+            for {
+              s <- acc.right
+              l <- exec(arg)
+            } yield s :+ l
+          } flatMap { values =>
+            val types = values.map(_.tag)
+            if (types == fun.args) {
+              Right(fun.value(values))
+            } else Left(ErrorFunctionArgumentsMismatch(name, fun.args, types))
+          }
+        case _ => Left(ErrorIdentNotFunction(name))
+      }
     }
   }
 }

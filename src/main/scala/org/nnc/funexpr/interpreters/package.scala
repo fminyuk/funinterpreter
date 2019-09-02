@@ -4,25 +4,28 @@ import scala.reflect.runtime.universe._
 
 package object interpreters {
 
-  sealed trait Value
-
-  final case class ValueItem[T](value: T) extends Value
-
-  final case class ValueFunction(value: Seq[Value] => Value) extends Value
-
-  sealed trait NewValue {
+  sealed trait Value {
     val tag: Type
   }
 
-  final case class NewValueItem[T: TypeTag](value: T) extends NewValue {
+  final case class ValueItem[T: TypeTag](value: T) extends Value {
     override val tag: Type = implicitly[TypeTag[T]].tpe
   }
 
-  final case class NewValueFunction[T: TypeTag](value: T) extends NewValue {
+  final case class ValueFunction[T: TypeTag](value: Seq[Value] => Value) extends Value {
     override val tag: Type = implicitly[TypeTag[T]].tpe
 
     val res: Type = tag.typeArgs.last
 
     var args: Seq[Type] = tag.typeArgs.init
   }
+
+  sealed trait Error
+
+  final case class ErrorIdentNotFound(ident: String) extends Error
+
+  final case class ErrorIdentNotFunction(ident: String) extends Error
+
+  final case class ErrorFunctionArgumentsMismatch(fun: String, expected: Seq[Any], actual: Seq[Any]) extends Error
+
 }

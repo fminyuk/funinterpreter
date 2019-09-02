@@ -2,6 +2,7 @@ package org.nnc.funexpr.interpreters
 
 import org.nnc.funexpr.parsers.ExprParser
 import org.scalatest.FunSuite
+import scala.reflect.runtime.universe._
 
 class ExprInterpreterTest extends FunSuite {
   private val parser = new ExprParser {}
@@ -31,8 +32,8 @@ class ExprInterpreterTest extends FunSuite {
     s.add("!", (a: Boolean) => !a)
     s.add("&&", (a: Boolean, b: Boolean) => a && b)
     s.add("||", (a: Boolean, b: Boolean) => a || b)
-    s.add("dd", (f: (Double, Double) => Double, a: Double) => f(a, a))
-    s.add("pow", (a: Double, b: Double) => math.pow(a, b))
+    s.add("min", (a: Double, b: Double) => a.min(b))
+    s.add("max", (a: Double, b: Double) => a.max(b))
 
     new ExprInterpreter(s)
   }
@@ -42,7 +43,7 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == ValueItem[Double](0))
+    assert(r == Right(ValueItem[Double](0)))
   }
 
   test("simple") {
@@ -50,7 +51,7 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == ValueItem[Double](15))
+    assert(r == Right(ValueItem[Double](15)))
   }
 
   test("complex") {
@@ -58,12 +59,46 @@ class ExprInterpreterTest extends FunSuite {
 
     val r = interpreter.exec(e)
 
-    assert(r == ValueItem[Double](4))
+    assert(r == Right(ValueItem[Double](4)))
   }
 
-  test("case types") {
-    val a: NewValueFunction[(Double, String) => Double] = NewValueFunction(_ * _.length)
+  test("identifier not found") {
+    val e = parser.parseAll(parser.expr, "2 * two").get
 
-    println(a.tag)
+    val r = interpreter.exec(e)
+
+    assert(r == Left(ErrorIdentNotFound("two")))
+  }
+
+  test("identifier not function") {
+    val e = parser.parseAll(parser.expr, "one(2)").get
+
+    val r = interpreter.exec(e)
+
+    assert(r == Left(ErrorIdentNotFunction("one")))
+  }
+
+  test("function arguments count mismatch") {
+    val e = parser.parseAll(parser.expr, "min(1, 2, 3)").get
+
+    val r = interpreter.exec(e)
+
+    assert(r == Left(ErrorFunctionArgumentsMismatch(
+      "min",
+      Seq(typeOf[Double], typeOf[Double]),
+      Seq(typeOf[Double], typeOf[Double], typeOf[Double])
+    )))
+  }
+
+  test("function arguments types mismatch") {
+    val e = parser.parseAll(parser.expr, "min(1, max)").get
+
+    val r = interpreter.exec(e)
+
+    assert(r == Left(ErrorFunctionArgumentsMismatch(
+      "min",
+      Seq(typeOf[Double], typeOf[Double]),
+      Seq(typeOf[Double], typeOf[(Double, Double) => Double])
+    )))
   }
 }
