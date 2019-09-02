@@ -14,7 +14,6 @@ class ExprInterpreter(symbolTable: SymbolTable) {
 
     case ExprFunction(name, args) => symbolTable.getValue(name) match {
       case None => Left(ErrorIdentNotFound(name))
-
       case Some(value) => value match {
         case fun: ValueFunction[_] =>
           args.foldLeft(Right(Seq()): Either[Error, Seq[Value]]) { (acc, arg) =>
@@ -26,7 +25,9 @@ class ExprInterpreter(symbolTable: SymbolTable) {
             val types = values.map(_.tag)
             if (types == fun.args) {
               Right(fun.value(values))
-            } else Left(ErrorFunctionArgumentsMismatch(name, fun.args, types))
+            } else {
+              Left(ErrorFunctionArgumentsMismatch(name, fun.args, types))
+            }
           }
         case _ => Left(ErrorIdentNotFunction(name))
       }
