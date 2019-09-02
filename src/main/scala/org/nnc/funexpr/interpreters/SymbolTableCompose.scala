@@ -10,8 +10,8 @@ class SymbolTableCompose(symbolTables: List[SymbolTable]) extends SymbolTable {
 
 object SymbolTableCompose {
   @tailrec
-  private def getValue(ident: String, st: List[SymbolTable]): Option[Value] = {
-    st match {
+  private def getValue(ident: String, symbolTables: List[SymbolTable]): Option[Value] = {
+    symbolTables match {
       case Nil => None
       case h :: t => h.getValue(ident) match {
         case None => getValue(ident, t)
