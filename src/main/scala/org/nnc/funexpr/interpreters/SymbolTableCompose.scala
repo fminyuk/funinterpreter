@@ -4,9 +4,11 @@ import scala.annotation.tailrec
 
 class SymbolTableCompose(symbolTables: List[SymbolTable]) extends SymbolTable {
   override def getValue(ident: String): Option[Value] = {
-    getValue(ident, symbolTables)
+    SymbolTableCompose.getValue(ident, symbolTables)
   }
+}
 
+object SymbolTableCompose {
   @tailrec
   private def getValue(ident: String, st: List[SymbolTable]): Option[Value] = {
     st match {
