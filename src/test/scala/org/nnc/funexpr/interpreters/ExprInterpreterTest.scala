@@ -8,34 +8,21 @@ class ExprInterpreterTest extends FunSuite {
   private val parser = new ExprParser {}
 
   private val interpreter: ExprInterpreter = {
-    import ValueCoderImplicits._
+    val symbolTable = new SymbolTableCompose(List(
+      new SymbolTableOperators,
+      new SymbolTableBase {
 
-    val s = new SymbolTableImpl()
+        import ValueCoderImplicits._
 
-    s.add("zero", 0.0)
-    s.add("one", 1.0)
-    s.add("ten", 10.0)
+        add[Double]("zero")(0)
+        add[Double]("one")(1)
+        add[Double]("ten")(10)
+        add[(Double, Double) => Double]("min")(_.min(_))
+        add[(Double, Double) => Double]("max")(_.max(_))
+      }
+    ))
 
-    s.add("+", (a: Double) => +a)
-    s.add("-", (a: Double) => -a)
-    s.add("**", (a: Double, b: Double) => math.pow(a, b))
-    s.add("*", (a: Double, b: Double) => a * b)
-    s.add("/", (a: Double, b: Double) => a / b)
-    s.add("+", (a: Double, b: Double) => a + b)
-    s.add("-", (a: Double, b: Double) => a - b)
-    s.add("==", (a: Double, b: Double) => a == b)
-    s.add("!=", (a: Double, b: Double) => a != b)
-    s.add(">=", (a: Double, b: Double) => a >= b)
-    s.add("<=", (a: Double, b: Double) => a <= b)
-    s.add(">", (a: Double, b: Double) => a > b)
-    s.add("<", (a: Double, b: Double) => a < b)
-    s.add("!", (a: Boolean) => !a)
-    s.add("&&", (a: Boolean, b: Boolean) => a && b)
-    s.add("||", (a: Boolean, b: Boolean) => a || b)
-    s.add("min", (a: Double, b: Double) => a.min(b))
-    s.add("max", (a: Double, b: Double) => a.max(b))
-
-    new ExprInterpreter(s)
+    new ExprInterpreter(symbolTable)
   }
 
   test("identifier") {
