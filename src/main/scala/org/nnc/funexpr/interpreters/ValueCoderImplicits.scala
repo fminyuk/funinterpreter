@@ -5,7 +5,6 @@ import scala.reflect.runtime.universe._
 object ValueCoderImplicits {
 
   implicit val doubleCoder: ValueCoder[Double] = new ValueCoder[Double] {
-
     override def encode(value: Double): Value = ValueItem[Double](value)
 
     override def decode(value: Value): Double = value.asInstanceOf[ValueItem[Double]].value

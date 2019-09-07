@@ -10,6 +10,7 @@ class ExprInterpreterTest extends FunSuite {
   private val interpreter: ExprInterpreter = {
     val symbolTable = new SymbolTableCompose(List(
       new SymbolTableOperators,
+      new SymbolTableMath,
       new SymbolTableBase {
 
         import ValueCoderImplicits._
@@ -17,8 +18,6 @@ class ExprInterpreterTest extends FunSuite {
         add[Double]("zero")(0)
         add[Double]("one")(1)
         add[Double]("ten")(10)
-        add[(Double, Double) => Double]("min")(_.min(_))
-        add[(Double, Double) => Double]("max")(_.max(_))
       }
     ))
 
