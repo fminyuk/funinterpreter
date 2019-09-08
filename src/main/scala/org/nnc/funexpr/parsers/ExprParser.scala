@@ -2,12 +2,13 @@ package org.nnc.funexpr.parsers
 
 import org.nnc.funexpr.ast._
 
+import scala.util.matching.Regex
 import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 
 trait ExprParser extends RegexParsers with PackratParsers {
 
-  private val real = """[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?""".r
-  private val identifier = """[a-zA-Z_][a-zA-Z_0-9]*""".r
+  protected val real: Regex = """[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?""".r
+  protected val identifier: Regex = """[a-zA-Z_][a-zA-Z_0-9]*""".r
 
   def expr: Parser[Expr] = operators(List(
     ("!", unary),
