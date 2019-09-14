@@ -4,6 +4,8 @@ import scala.reflect.runtime.universe.TypeTag
 import org.nnc.funexpr.ast._
 import cats.syntax.either._
 
+import scala.annotation.tailrec
+
 class ExprCompiler(symbols: SymbolTable) {
   def compile(expr: Expr): Either[Error, Seq[ExprProgram]] = expr match {
     case ExprFloat(value) => getValueProgram(value)
@@ -58,22 +60,22 @@ class ExprCompiler(symbols: SymbolTable) {
     value match {
       case fun: ValueFunction[_] =>
         for {
-          args <- getCombinations(vars)
+          args <- getCombinations(vars, Seq(Seq()))
           if fun.args == args.map(_.res)
         } yield new ExprProgramFunction(fun, args)
       case _ => Seq()
     }
   }
 
-  private def getCombinations(vars: Seq[Seq[ExprProgram]]): Seq[Seq[ExprProgram]] = {
+  @tailrec
+  private def getCombinations[T](vars: Seq[Seq[T]], rest: Seq[Seq[T]]): Seq[Seq[T]] = {
     vars match {
-      case Seq() => Seq(Seq())
-      case Seq(h) => h.map(Seq(_))
-      case Seq(h, tail @ _ *) =>
-        for {
-          ah <- h
-          at <- getCombinations(tail)
-        } yield ah +: at
+      case head :+ tail =>
+        getCombinations(head, for {
+          at <- tail
+          ar <- rest
+        } yield at +: ar)
+      case _ => rest
     }
   }
 }
