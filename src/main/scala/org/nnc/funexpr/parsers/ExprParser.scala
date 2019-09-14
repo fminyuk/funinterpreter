@@ -7,24 +7,32 @@ import scala.util.parsing.combinator.{PackratParsers, RegexParsers}
 
 trait ExprParser extends RegexParsers with PackratParsers {
 
-  protected val real: Regex = """[+-]?\d+(:?\.\d*)?(:?[eE][+-]?\d+)?""".r
+  protected val float: Regex = """[+-]?\d*((\.\d+([eE][+-]?[0-9]+)?[fF]?)|([fF])|([eE][+-]?[0-9]+))""".r
+  protected val int: Regex = """[+-]?\d+""".r
   protected val identifier: Regex = """[a-zA-Z_][a-zA-Z_0-9]*""".r
 
   def expr: Parser[Expr] = operators(List(
     ("!", unary),
     ("+ -", unary),
     ("**", binary),
-    ("* /", binary),
+    ("* / %", binary),
     ("+ -", binary),
     ("== != >= <= > <", binary),
-    ("&&", binary),
-    ("||", binary)
+    ("&", binary),
+    ("^", binary),
+    ("|", binary)
   ))(exprFactor)
 
-  def exprFactor: Parser[Expr] = exprFun | exprIdent | exprValue | "(" ~> expr <~ ")"
+  def exprFactor: Parser[Expr] = exprBool | exprFun | exprIdent | exprFloat | exprInt | "(" ~> expr <~ ")"
 
-  def exprValue: Parser[Expr] = real ^^ {
-    value => ExprValue(value.toDouble)
+  def exprBool: Parser[Expr] = "true" ^^ { _ => ExprBool(true) } | "false" ^^ { _ => ExprBool(false) }
+
+  def exprInt: Parser[Expr] = int ^^ {
+    value => ExprInt(value.toInt)
+  }
+
+  def exprFloat: Parser[Expr] = float ^^ {
+    value => ExprFloat(value.toDouble)
   }
 
   def exprIdent: Parser[Expr] = identifier ^^ {

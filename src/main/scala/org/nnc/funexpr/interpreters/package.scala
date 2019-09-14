@@ -24,8 +24,10 @@ package object interpreters {
 
   final case class ErrorIdentNotFound(ident: String) extends Error
 
-  final case class ErrorIdentNotFunction(ident: String) extends Error
+  final case class ErrorFunctionNotFound(ident: String) extends Error
 
-  final case class ErrorFunctionArgumentsMismatch(fun: String, expected: Seq[Any], actual: Seq[Any]) extends Error
+  final case class ErrorExprWrongType(required: Type) extends Error
+
+  final case class ErrorExprAmbiguous(required: Type) extends Error
 
 }

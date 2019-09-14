@@ -4,33 +4,45 @@ class SymbolTableMath extends SymbolTableBase {
 
   import ValueCoderImplicits._
 
+  private val funII = add[Int => Int] _
+  private val funDD = add[Double => Double] _
+
+  private val funIII = add[(Int, Int) => Int] _
+  private val funDDD = add[(Double, Double) => Double] _
+
   add("pi")(math.Pi)
   add("e")(math.E)
 
-  add[Double => Double]("sqrt")(math.sqrt)
-  add[Double => Double]("cbrt")(math.cbrt)
+  funII("abs")(_.abs)
+  funII("sign")(_.sign)
 
-  add[Double => Double]("exp")(math.exp)
-  add[Double => Double]("log")(math.log)
-  add[(Double, Double) => Double]("pow")(math.pow)
+  funIII("min")(_.min(_))
+  funIII("max")(_.max(_))
 
-  add[Double => Double]("sin")(math.sin)
-  add[Double => Double]("cos")(math.cos)
-  add[Double => Double]("tan")(math.tan)
-  add[Double => Double]("cot")(1 / math.tan(_))
-  add[Double => Double]("asin")(math.asin)
-  add[Double => Double]("acos")(math.acos)
-  add[Double => Double]("atan")(math.atan)
-  add[Double => Double]("acot")(math.Pi / 2 - math.atan(_))
+  funDD("abs")(_.abs)
+  funDD("sign")(_.sign)
 
-  add[Double => Double]("sinh")(math.sinh)
-  add[Double => Double]("cosh")(math.cosh)
-  add[Double => Double]("tanh")(math.tanh)
-  add[Double => Double]("coth")(1 / math.tanh(_))
+  funDDD("min")(_.min(_))
+  funDDD("max")(_.max(_))
 
-  add[(Double, Double) => Double]("min")(_.min(_))
-  add[(Double, Double) => Double]("max")(_.max(_))
+  funDD("sqrt")(math.sqrt)
+  funDD("cbrt")(math.cbrt)
 
-  add[Double => Double]("abs")(_.abs)
-  add[Double => Double]("sign")(_.sign)
+  funDD("exp")(math.exp)
+  funDD("log")(math.log)
+  funDDD("pow")(math.pow)
+
+  funDD("sin")(math.sin)
+  funDD("cos")(math.cos)
+  funDD("tan")(math.tan)
+  funDD("cot")(1 / math.tan(_))
+  funDD("asin")(math.asin)
+  funDD("acos")(math.acos)
+  funDD("atan")(math.atan)
+  funDD("acot")(math.Pi / 2 - math.atan(_))
+
+  funDD("sinh")(math.sinh)
+  funDD("cosh")(math.cosh)
+  funDD("tanh")(math.tanh)
+  funDD("coth")(1 / math.tanh(_))
 }

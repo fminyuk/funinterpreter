@@ -1,90 +1,134 @@
 package org.nnc.funexpr.interpreters
 
+import scala.reflect.runtime.universe._
 import org.nnc.funexpr.parsers.ExprParser
 import org.scalatest.FunSuite
-import scala.reflect.runtime.universe._
 
 class ExprInterpreterTest extends FunSuite {
-  private val parser = new ExprParser {}
 
-  private val interpreter: ExprInterpreter = {
+  import ValueCoderImplicits._
+
+  private val parser = new ExprParser {}
+  private val compiler = {
     val symbolTable = new SymbolTableCompose(List(
       new SymbolTableOperators,
       new SymbolTableMath,
       new SymbolTableBase {
-
-        import ValueCoderImplicits._
-
         add[Double]("zero")(0)
-        add[Double]("one")(1)
-        add[Double]("ten")(10)
+        add[Int]("zero")(0)
+
+        add[Int]("amb")(0)
+        add[Int]("amb")(0)
+
+        add[() => Int]("fun")(() => 1)
       }
     ))
 
-    new ExprInterpreter(symbolTable)
+    new ExprCompiler(symbolTable)
+  }
+  private val interpreter = new ExprInterpreter(compiler)
+
+  test("value: bool") {
+    val e = parser.parseAll(parser.expr, "true").get
+
+    val r = interpreter.exec[Boolean](e)
+
+    assert(r == Right(true))
   }
 
-  test("identifier") {
+  test("value: int") {
+    val e = parser.parseAll(parser.expr, "10").get
+
+    val r = interpreter.exec[Int](e)
+
+    assert(r == Right(10))
+  }
+
+  test("value: double") {
+    val e = parser.parseAll(parser.expr, "10f").get
+
+    val r = interpreter.exec[Double](e)
+
+    assert(r == Right(10))
+  }
+
+  test("ident: int") {
     val e = parser.parseAll(parser.expr, "zero").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Int](e)
 
-    assert(r == Right(ValueItem[Double](0)))
+    assert(r == Right(0))
   }
 
-  test("simple") {
-    val e = parser.parseAll(parser.expr, "ten + 5").get
+  test("ident: double") {
+    val e = parser.parseAll(parser.expr, "zero").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Double](e)
 
-    assert(r == Right(ValueItem[Double](15)))
+    assert(r == Right(0))
+  }
+
+  test("function: 0 args") {
+    val e = parser.parseAll(parser.expr, "fun()").get
+
+    val r = interpreter.exec[Int](e)
+
+    assert(r == Right(1))
+  }
+
+  test("function: 1 args") {
+    val e = parser.parseAll(parser.expr, "abs(-10f)").get
+
+    val r = interpreter.exec[Double](e)
+
+    assert(r == Right(10))
+  }
+
+  test("function: 2 args") {
+    val e = parser.parseAll(parser.expr, "max(1f, 1e3)").get
+
+    val r = interpreter.exec[Double](e)
+
+    assert(r == Right(1000))
   }
 
   test("complex") {
-    val e = parser.parseAll(parser.expr, "(one + 2 + 3 * 2**3) / 9 + 1").get
+    val e = parser.parseAll(parser.expr, "9 + 4 * 5 < 30").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Boolean](e)
 
-    assert(r == Right(ValueItem[Double](4)))
+    assert(r == Right(true))
   }
 
   test("identifier not found") {
-    val e = parser.parseAll(parser.expr, "2 * two").get
+    val e = parser.parseAll(parser.expr, "aaa").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Double](e)
 
-    assert(r == Left(ErrorIdentNotFound("two")))
+    assert(r == Left(ErrorIdentNotFound("aaa")))
   }
 
-  test("identifier not function") {
-    val e = parser.parseAll(parser.expr, "one(2)").get
+  test("function not found") {
+    val e = parser.parseAll(parser.expr, "bbb()").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Double](e)
 
-    assert(r == Left(ErrorIdentNotFunction("one")))
+    assert(r == Left(ErrorFunctionNotFound("bbb")))
   }
 
-  test("function arguments count mismatch") {
-    val e = parser.parseAll(parser.expr, "min(1, 2, 3)").get
+  test("expression wrong type") {
+    val e = parser.parseAll(parser.expr, "2 + 2").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Double](e)
 
-    assert(r == Left(ErrorFunctionArgumentsMismatch(
-      "min",
-      Seq(typeOf[Double], typeOf[Double]),
-      Seq(typeOf[Double], typeOf[Double], typeOf[Double])
-    )))
+    assert(r == Left(ErrorExprWrongType(typeOf[Double])))
   }
 
-  test("function arguments types mismatch") {
-    val e = parser.parseAll(parser.expr, "min(1, max)").get
+  test("expression ambiguous") {
+    val e = parser.parseAll(parser.expr, "amb").get
 
-    val r = interpreter.exec(e)
+    val r = interpreter.exec[Int](e)
 
-    assert(r == Left(ErrorFunctionArgumentsMismatch(
-      "min",
-      Seq(typeOf[Double], typeOf[Double]),
-      Seq(typeOf[Double], typeOf[(Double, Double) => Double])
-    )))
+    assert(r == Left(ErrorExprAmbiguous(typeOf[Int])))
   }
 }

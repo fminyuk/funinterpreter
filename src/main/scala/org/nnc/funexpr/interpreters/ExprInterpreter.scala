@@ -1,36 +1,24 @@
 package org.nnc.funexpr.interpreters
 
-import org.nnc.funexpr.ast.{Expr, ExprFunction, ExprIdent, ExprValue}
+import scala.reflect.runtime.universe.TypeTag
+import org.nnc.funexpr.ast._
+import cats.syntax.either._
 
-class ExprInterpreter(symbolTable: SymbolTable) {
-  def exec(expr: Expr): Either[Error, Value] = expr match {
+class ExprInterpreter(compiler: ExprCompiler) {
+  def exec[R: TypeTag: ValueCoder](expr: Expr): Either[Error, R] = {
+    for {
+      programs <- compiler.compile(expr)
+      value <- exec(programs)
+    } yield implicitly[ValueCoder[R]].decode(value)
+  }
 
-    case ExprIdent(name) => symbolTable.getValue(name) match {
-      case None => Left(ErrorIdentNotFound(name))
-      case Some(value) => Right(value)
-    }
+  private def exec[R: TypeTag](programs: Seq[ExprProgram]): Either[Error, Value] = {
+    val requiredType = implicitly[TypeTag[R]].tpe
 
-    case ExprValue(value) => Right(ValueItem[Double](value))
-
-    case ExprFunction(name, args) => symbolTable.getValue(name) match {
-      case None => Left(ErrorIdentNotFound(name))
-      case Some(value) => value match {
-        case fun: ValueFunction[_] =>
-          args.foldLeft(Right(Seq()): Either[Error, Seq[Value]]) { (acc, arg) =>
-            for {
-              s <- acc.right
-              l <- exec(arg)
-            } yield s :+ l
-          } flatMap { values =>
-            val types = values.map(_.tag)
-            if (types == fun.args) {
-              Right(fun.value(values))
-            } else {
-              Left(ErrorFunctionArgumentsMismatch(name, fun.args, types))
-            }
-          }
-        case _ => Left(ErrorIdentNotFunction(name))
-      }
+    programs.filter(_.res == requiredType) match {
+      case Seq() => ErrorExprWrongType(requiredType).asLeft
+      case Seq(one) => one.exec.asRight
+      case _ => ErrorExprAmbiguous(requiredType).asLeft
     }
   }
 }

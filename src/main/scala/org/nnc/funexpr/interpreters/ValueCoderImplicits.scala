@@ -4,16 +4,22 @@ import scala.reflect.runtime.universe._
 
 object ValueCoderImplicits {
 
-  implicit val doubleCoder: ValueCoder[Double] = new ValueCoder[Double] {
-    override def encode(value: Double): Value = ValueItem[Double](value)
-
-    override def decode(value: Value): Double = value.asInstanceOf[ValueItem[Double]].value
-  }
-
   implicit val boolCoder: ValueCoder[Boolean] = new ValueCoder[Boolean] {
     override def encode(value: Boolean): Value = ValueItem[Boolean](value)
 
     override def decode(value: Value): Boolean = value.asInstanceOf[ValueItem[Boolean]].value
+  }
+
+  implicit val intCoder: ValueCoder[Int] = new ValueCoder[Int] {
+    override def encode(value: Int): Value = ValueItem[Int](value)
+
+    override def decode(value: Value): Int = value.asInstanceOf[ValueItem[Int]].value
+  }
+
+  implicit val doubleCoder: ValueCoder[Double] = new ValueCoder[Double] {
+    override def encode(value: Double): Value = ValueItem[Double](value)
+
+    override def decode(value: Value): Double = value.asInstanceOf[ValueItem[Double]].value
   }
 
   implicit def fun0Coder[R](implicit
@@ -38,19 +44,19 @@ object ValueCoderImplicits {
                                 t1t: TypeTag[T1],
                                 t1c: ValueCoder[T1],
                                 rst: TypeTag[R],
-                                rsc: ValueCoder[R]): ValueCoder[(T1) => R] = {
-    new ValueCoder[(T1) => R] {
-      override def encode(value: (T1) => R): Value = ValueFunction[(T1) => R] {
+                                rsc: ValueCoder[R]): ValueCoder[T1 => R] = {
+    new ValueCoder[T1 => R] {
+      override def encode(value: T1 => R): Value = ValueFunction[T1 => R] {
         case Seq(a1) =>
           val v1 = t1c.decode(a1)
           rsc.encode(value(v1))
       }
 
-      override def decode(value: Value): (T1) => R = (a1) => {
+      override def decode(value: Value): T1 => R = a1 => {
         val args = Seq(
           t1c.encode(a1)
         )
-        rsc.decode(value.asInstanceOf[ValueFunction[(T1) => R]].value(args))
+        rsc.decode(value.asInstanceOf[ValueFunction[T1 => R]].value(args))
       }
     }
   }
