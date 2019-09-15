@@ -85,11 +85,11 @@ object ExprCompiler {
   @tailrec
   private def getCombinations[T](vars: Seq[Seq[T]], rest: Seq[Seq[T]]): Seq[Seq[T]] = {
     vars match {
-      case head :+ tail =>
-        getCombinations(head, for {
-          at <- tail
-          ar <- rest
-        } yield at +: ar)
+      case init :+ last =>
+        getCombinations(init, for {
+          el <- last
+          er <- rest
+        } yield el +: er)
       case _ => rest
     }
   }
