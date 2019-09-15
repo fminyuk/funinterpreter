@@ -17,8 +17,8 @@ class ExprInterpreterTest extends FunSuite {
         add[Double]("zero")(0)
         add[Int]("zero")(0)
 
-        add[Int]("amb")(0)
-        add[Int]("amb")(0)
+        add[(Double => Double, Int) => Int]("ff")((_, i) => i)
+        add[(Int => Int, Int) => Int]("ff")((_, i) => i)
 
         add[() => Int]("fun")(() => 1)
       }
@@ -125,7 +125,7 @@ class ExprInterpreterTest extends FunSuite {
   }
 
   test("expression ambiguous") {
-    val e = parser.parseAll(parser.expr, "amb").get
+    val e = parser.parseAll(parser.expr, "ff(abs, 2)").get
 
     val r = interpreter.exec[Int](e)
 
