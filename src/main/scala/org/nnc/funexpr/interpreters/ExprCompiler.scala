@@ -1,6 +1,6 @@
 package org.nnc.funexpr.interpreters
 
-import scala.reflect.runtime.universe.TypeTag
+import scala.reflect.runtime.universe.{Type, TypeTag}
 import org.nnc.funexpr.ast._
 import cats.syntax.either._
 
@@ -20,13 +20,13 @@ class ExprCompiler(symbols: SymbolTable) {
   }
 
   private def getValueProgram[T: TypeTag](value: T): Either[Error, Seq[ExprProgram]] = {
-    Seq(new ExprProgramValue(ValueItem(value))).asRight
+    Seq(new ExprCompiler.ExprProgramValue(ValueItem(value))).asRight
   }
 
   private def getIdentProgram(name: String): Either[Error, Seq[ExprProgram]] = {
     symbols.getValue(name) match {
       case Seq() => ErrorIdentNotFound(name).asLeft
-      case values => values.map(v => new ExprProgramValue(v)).asRight
+      case values => values.map(v => new ExprCompiler.ExprProgramValue(v)).asRight
     }
   }
 
@@ -60,11 +60,26 @@ class ExprCompiler(symbols: SymbolTable) {
     value match {
       case fun: ValueFunction[_] =>
         for {
-          args <- getCombinations(vars, Seq(Seq()))
+          args <- ExprCompiler.getCombinations(vars, Seq(Seq()))
           if fun.args == args.map(_.res)
-        } yield new ExprProgramFunction(fun, args)
+        } yield new ExprCompiler.ExprProgramFunction(fun, args)
       case _ => Seq()
     }
+  }
+}
+
+object ExprCompiler {
+
+  private class ExprProgramFunction(fun: ValueFunction[_], args: Seq[ExprProgram]) extends ExprProgram {
+    override val res: Type = fun.res
+
+    override def exec: Value = fun.value(args.map(_.exec))
+  }
+
+  private class ExprProgramValue(value: Value) extends ExprProgram {
+    override val res: Type = value.tag
+
+    override def exec: Value = value
   }
 
   @tailrec
