@@ -41,13 +41,9 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   }
 
   private def getFunctions(name: String, args: Seq[Expr]): Either[Error, Seq[ValueFunction[_]]] = {
-    val nargs = args.size
     val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
       value match {
-        case fun: ValueFunction[_] => fun.args.size match {
-          case `nargs` => acc :+ fun
-          case _ => acc
-        }
+        case fun: ValueFunction[_] if fun.args.size == args.size => acc :+ fun
         case _ => acc
       }
     }
