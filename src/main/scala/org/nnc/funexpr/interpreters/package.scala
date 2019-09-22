@@ -1,6 +1,8 @@
 package org.nnc.funexpr
 
-import scala.reflect.runtime.universe._
+import org.nnc.funexpr.ast.Expr
+
+import scala.reflect.runtime.universe.{Type, TypeTag}
 
 package object interpreters {
 
@@ -22,12 +24,14 @@ package object interpreters {
 
   sealed trait Error
 
-  final case class ErrorIdentNotFound(ident: String) extends Error
+  final case class ErrorIdentNotFound(name: String) extends Error
 
-  final case class ErrorFunctionNotFound(ident: String) extends Error
+  final case class ErrorFunctionNotFound(name: String, args: Seq[Expr]) extends Error
 
-  final case class ErrorExprWrongType(required: Type) extends Error
+  final case class ErrorNoSuitableFunction(name: String, args: Seq[Expr]) extends Error
 
-  final case class ErrorExprAmbiguous(required: Type) extends Error
+  final case class ErrorExprAmbiguous(expr: Expr, required: Type) extends Error
+
+  final case class ErrorExprWrongType(expr: Expr, required: Type) extends Error
 
 }
