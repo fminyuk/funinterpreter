@@ -11,7 +11,7 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
     program <- {
       programs.filter(_.res == resultType) match {
         case Seq() => ErrorExprWrongType(expr, resultType).asLeft
-        case Seq(one) => one.asRight
+        case Seq(p) => p.asRight
         case _ => ErrorExprAmbiguous(expr, resultType).asLeft
       }
     }
@@ -43,7 +43,7 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   private def getFunctions(name: String, args: Seq[Expr]): Either[Error, Seq[ValueFunction[_]]] = {
     val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
       value match {
-        case fun: ValueFunction[_] if fun.args.size == args.size => acc :+ fun
+        case f: ValueFunction[_] if f.args.size == args.size => acc :+ f
         case _ => acc
       }
     }
@@ -72,7 +72,7 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
                 p.asRight
               } else {
                 args.indices.filter(variant(_).size > 1) match {
-                  case h +: _ => ErrorExprAmbiguous(args(h), function.args(h)).asLeft
+                  case Seq(h, _@_ *) => ErrorExprAmbiguous(args(h), function.args(h)).asLeft
                   case _ => (p :+ new ExprCompilerImpl.ExprProgramFunction(function, variant.map(_.head))).asRight
                 }
               }
@@ -111,5 +111,6 @@ object ExprCompilerImpl {
 
     override def exec: Value = value
   }
+
 }
 
