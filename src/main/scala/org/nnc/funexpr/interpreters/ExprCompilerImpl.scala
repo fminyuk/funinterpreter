@@ -6,55 +6,39 @@ import cats.syntax.either._
 
 class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   override def compile(expr: Expr, resultType: Type): Either[Error, ExprProgram] = for {
-    programs <- getPrograms(expr)
+    programs <- compile(expr)
 
-    program <- {
-      programs.filter(_.res == resultType) match {
-        case Seq() => ErrorExprWrongType(expr, resultType).asLeft
-        case Seq(p) => p.asRight
-        case _ => ErrorExprAmbiguous(expr, resultType).asLeft
-      }
+    program <- programs.filter(_.res == resultType) match {
+      case Seq() => ErrorExprWrongType(expr, resultType).asLeft
+      case Seq(p) => p.asRight
+      case _ => ErrorExprAmbiguous(expr, resultType).asLeft
     }
   } yield program
 
-  private def getPrograms(expr: Expr): Either[Error, Seq[ExprProgram]] = expr match {
-    case ExprFloat(value) => getValueProgram(value)
+  private def compile(expr: Expr): Either[Error, Seq[ExprProgram]] = expr match {
+    case ExprFloat(value) => compileValue(value)
 
-    case ExprBool(value) => getValueProgram(value)
+    case ExprBool(value) => compileValue(value)
 
-    case ExprInt(value) => getValueProgram(value)
+    case ExprInt(value) => compileValue(value)
 
-    case ExprIdent(name) => getIdentProgram(name)
+    case ExprIdent(name) => compileIdent(name)
 
-    case ExprFunction(name, args) => getFunctionProgram(name, args)
+    case ExprFunction(name, args) => compileFunction(name, args)
   }
 
-  private def getValueProgram[T: TypeTag](value: T): Either[Error, Seq[ExprProgram]] = {
+  private def compileValue[T: TypeTag](value: T): Either[Error, Seq[ExprProgram]] = {
     Seq(new ExprCompilerImpl.ExprProgramValue(ValueItem(value))).asRight
   }
 
-  private def getIdentProgram(name: String): Either[Error, Seq[ExprProgram]] = {
+  private def compileIdent(name: String): Either[Error, Seq[ExprProgram]] = {
     symbols.getValue(name) match {
       case Seq() => ErrorIdentNotFound(name).asLeft
       case values => values.map(new ExprCompilerImpl.ExprProgramValue(_)).asRight
     }
   }
 
-  private def getFunctions(name: String, args: Seq[Expr]): Either[Error, Seq[ValueFunction[_]]] = {
-    val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
-      value match {
-        case f: ValueFunction[_] if f.args.size == args.size => acc :+ f
-        case _ => acc
-      }
-    }
-
-    functions.size match {
-      case 0 => ErrorFunctionNotFound(name, args).asLeft
-      case _ => functions.asRight
-    }
-  }
-
-  private def getFunctionProgram(name: String, args: Seq[Expr]): Either[Error, Seq[ExprProgram]] = {
+  private def compileFunction(name: String, args: Seq[Expr]): Either[Error, Seq[ExprProgram]] = {
     for {
       functions <- getFunctions(name, args)
       variants <- getVariants(args)
@@ -88,11 +72,25 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
     } yield result
   }
 
+  private def getFunctions(name: String, args: Seq[Expr]): Either[Error, Seq[ValueFunction[_]]] = {
+    val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
+      value match {
+        case f: ValueFunction[_] if f.args.size == args.size => acc :+ f
+        case _ => acc
+      }
+    }
+
+    functions.size match {
+      case 0 => ErrorFunctionNotFound(name, args).asLeft
+      case _ => functions.asRight
+    }
+  }
+
   private def getVariants(args: Seq[Expr]): Either[Error, Seq[Seq[ExprProgram]]] = {
     args.foldLeft(Right(Seq()): Either[Error, Seq[Seq[ExprProgram]]]) { (acc, arg) =>
       for {
         s <- acc
-        l <- getPrograms(arg)
+        l <- compile(arg)
       } yield s :+ l
     }
   }
