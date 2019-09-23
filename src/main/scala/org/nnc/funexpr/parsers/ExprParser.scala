@@ -25,7 +25,11 @@ trait ExprParser extends RegexParsers with PackratParsers {
 
   def exprFactor: Parser[Expr] = exprBool | exprFun | exprIdent | exprFloat | exprInt | "(" ~> expr <~ ")"
 
-  def exprBool: Parser[Expr] = "true" ^^ { _ => ExprBool(true) } | "false" ^^ { _ => ExprBool(false) }
+  def exprBool: Parser[Expr] = exprTrue | exprFalse
+
+  def exprTrue: Parser[Expr] = ExprParser.TRUE_VALUE ^^ { _ => ExprBool(true) }
+
+  def exprFalse: Parser[Expr] = ExprParser.FALSE_VALUE ^^ { _ => ExprBool(false) }
 
   def exprInt: Parser[Expr] = int ^^ {
     value => ExprInt(value.toInt)
@@ -63,4 +67,9 @@ trait ExprParser extends RegexParsers with PackratParsers {
   }
 
   private def operexpr(ops: String): Parser[String] = ops.split("""\s+""").map(Parser(_)).reduce(_ | _)
+}
+
+object ExprParser {
+  val TRUE_VALUE = "true"
+  val FALSE_VALUE = "false"
 }
