@@ -79,4 +79,6 @@ class SymbolTableOperators extends SymbolTableBase {
   convBD("float")(if (_) 1.0 else 0.0)
   convID("float")(_.doubleValue())
   convDD("float")(a => a)
+
+  convID(SymbolTable.IMPLICIT)(_.doubleValue())
 }

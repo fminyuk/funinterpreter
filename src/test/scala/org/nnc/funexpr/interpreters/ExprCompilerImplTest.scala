@@ -108,6 +108,14 @@ class ExprCompilerImplTest extends FunSuite {
     assert(r.map(_.exec) == Right(ValueItem(1.0)))
   }
 
+  test("implicits converters") {
+    val e = ExprFunction("+", Seq(ExprInt(2), ExprInt(2)))
+
+    val r = compiler.compile(e, typeOf[Double])
+
+    assert(r.map(_.exec) == Right(ValueItem(4.0)))
+  }
+
   test("error: identifier not found") {
     val e = ExprIdent("aaa")
 
@@ -125,7 +133,7 @@ class ExprCompilerImplTest extends FunSuite {
   }
 
   test("error: expression wrong type") {
-    val e = ExprFunction("+", Seq(ExprInt(2), ExprInt(2)))
+    val e = ExprFunction("&", Seq(ExprBool(true), ExprBool(false)))
 
     val r = compiler.compile(e, typeOf[Double])
 
@@ -158,7 +166,7 @@ class ExprCompilerImplTest extends FunSuite {
   }
 
   test("time") {
-    val e = ExprFunction("**", Seq(ExprFloat(2), ExprFunction("min", Seq(ExprFloat(3), ExprFloat(1e4)))))
+    val e = ExprFunction("**", Seq(ExprFloat(2), ExprFunction("min", Seq(ExprInt(3), ExprFloat(1e4)))))
 
     for (i <- 1 to 1000000) {
       val r = compiler.compile(e, typeOf[Double])

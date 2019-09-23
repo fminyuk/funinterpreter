@@ -8,7 +8,7 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   override def compile(expr: Expr, resultType: Type): Either[Error, ExprProgram] = for {
     programs <- compile(expr)
 
-    program <- programs.filter(_.res == resultType) match {
+    program <- selectOrConvert(programs, resultType) match {
       case Seq() => ErrorExprWrongType(expr, resultType).asLeft
       case Seq(p) => p.asRight
       case _ => ErrorExprAmbiguous(expr, resultType).asLeft
@@ -25,6 +25,25 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
     case ExprIdent(name) => compileIdent(name)
 
     case ExprFunction(name, args) => compileFunction(name, args)
+  }
+
+  private def selectOrConvert(programs: Seq[ExprProgram], resultType: Type): Seq[ExprProgram] = {
+    programs.filter(_.res == resultType) match {
+      case Seq() =>
+        for {
+          p <- programs
+          c <- symbols.getValue(SymbolTable.IMPLICIT).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
+            value match {
+              case f: ValueFunction[_] if f.res == resultType => f.args match {
+                case Seq(src) if src == p.res => f +: acc
+                case _ => acc
+              }
+              case _ => acc
+            }
+          }
+        } yield new ExprCompilerImpl.ExprProgramFunction(c, Seq(p))
+      case some => some
+    }
   }
 
   private def compileValue[T: TypeTag](value: T): Either[Error, Seq[ExprProgram]] = {
@@ -44,24 +63,25 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
       variants <- getVariants(args)
 
       programs <- {
-        functions.foldLeft(Right(Seq()): Either[Error, Seq[ExprProgram]]) { (acc, function) =>
-          for {
-            p <- acc
-            r <- {
-              val variant = for {
-                i <- args.indices
-              } yield variants(i).filter(_.res == function.args(i))
+        functions.foldLeft(Right(Seq()): Either[Error, Seq[ExprProgram]]) {
+          (acc, function) =>
+            for {
+              p <- acc
+              r <- {
+                val variant = variants.zip(function.args).map {
+                  case (p, t) => selectOrConvert(p, t)
+                }
 
-              if (variant.exists(_.isEmpty)) {
-                p.asRight
-              } else {
-                args.indices.filter(variant(_).size > 1) match {
-                  case Seq(h, _@_ *) => ErrorExprAmbiguous(args(h), function.args(h)).asLeft
-                  case _ => (p :+ new ExprCompilerImpl.ExprProgramFunction(function, variant.map(_.head))).asRight
+                if (variant.exists(_.isEmpty)) {
+                  p.asRight
+                } else {
+                  args.indices.filter(variant(_).size > 1) match {
+                    case Seq(h, _@_*) => ErrorExprAmbiguous(args(h), function.args(h)).asLeft
+                    case _ => (p :+ new ExprCompilerImpl.ExprProgramFunction(function, variant.map(_.head))).asRight
+                  }
                 }
               }
-            }
-          } yield r
+            } yield r
         }
       }
 
@@ -73,11 +93,12 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   }
 
   private def getFunctions(name: String, args: Seq[Expr]): Either[Error, Seq[ValueFunction[_]]] = {
-    val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) { (acc, value) =>
-      value match {
-        case f: ValueFunction[_] if f.args.size == args.size => acc :+ f
-        case _ => acc
-      }
+    val functions = symbols.getValue(name).foldLeft(Seq(): Seq[ValueFunction[_]]) {
+      (acc, value) =>
+        value match {
+          case f: ValueFunction[_] if f.args.size == args.size => acc :+ f
+          case _ => acc
+        }
     }
 
     functions.size match {
@@ -87,11 +108,12 @@ class ExprCompilerImpl(symbols: SymbolTable) extends ExprCompiler {
   }
 
   private def getVariants(args: Seq[Expr]): Either[Error, Seq[Seq[ExprProgram]]] = {
-    args.foldLeft(Right(Seq()): Either[Error, Seq[Seq[ExprProgram]]]) { (acc, arg) =>
-      for {
-        s <- acc
-        l <- compile(arg)
-      } yield s :+ l
+    args.foldLeft(Right(Seq()): Either[Error, Seq[Seq[ExprProgram]]]) {
+      (acc, arg) =>
+        for {
+          s <- acc
+          l <- compile(arg)
+        } yield s :+ l
     }
   }
 }
